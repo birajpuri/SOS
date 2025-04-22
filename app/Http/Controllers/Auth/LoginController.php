@@ -23,13 +23,24 @@ class LoginController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            
+            // Check if the user is an admin
+            if (!$user->is_admin) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Access denied. Admin privileges required.'
+                ])->onlyInput('email');
+            }
+            
             //Regenerate the session to prevent fixation attacks
             $request->session()->regenerate();
-            return redirect()->intended(route('admin.dashboard'))->with('success', 'You are logged in');
+            return redirect()->intended(route('admin.dashboard'))->with('success', 'Welcome back, Admin!');
         }
+        
         //if auth fails, redirect back
         return back()->withErrors([
-            'email' => 'The provided credentials donot match our records'
+            'email' => 'The provided credentials do not match our records'
         ])->onlyInput('email');
     }
 
